@@ -46,7 +46,6 @@ h2 { text-align:center }
 <h3>Pilih Package</h3>
 <div id="packages" class="grid"></div>
 
-<!-- METODE BAYAR (BELI ONLY) -->
 <div id="paymentMethod" style="display:none">
 <h3>Metode Bayaran</h3>
 <div class="grid">
@@ -55,26 +54,27 @@ h2 { text-align:center }
 </div>
 </div>
 
-<!-- PILIH BAYAR CASH -->
 <div id="cashOptions" class="grid" style="display:none">
-<div class="box" style="background:#2ecc71" onclick="setCash(200000)">200k</div>
-<div class="box" style="background:#27ae60" onclick="setCash(150000)">150k</div>
-<div class="box" style="background:#3498db" onclick="setCash(100000)">100k</div>
-<div class="box" style="background:#9b59b6" onclick="setCash(50000)">50k</div>
-<div class="box" style="background:#f39c12" onclick="setCash(30000)">30k</div>
-<div class="box" style="background:#e67e22" onclick="setCash(20000)">20k</div>
-<div class="box" style="background:#e84393" onclick="setCash('auto')">Secukupnya</div>
+<div class="box" style="background:#2ecc71" onclick="setCash(200000,this)">200k</div>
+<div class="box" style="background:#27ae60" onclick="setCash(150000,this)">150k</div>
+<div class="box" style="background:#3498db" onclick="setCash(100000,this)">100k</div>
+<div class="box" style="background:#16a085" onclick="setCash(70000,this)">70k</div>
+<div class="box" style="background:#9b59b6" onclick="setCash(50000,this)">50k</div>
+<div class="box" style="background:#f39c12" onclick="setCash(30000,this)">30k</div>
+<div class="box" style="background:#e67e22" onclick="setCash(20000,this)">20k</div>
+<div class="box" style="background:#e84393" onclick="setCash('auto',this)">Secukupnya</div>
 </div>
 
-<!-- HUTANG -->
+<div id="manualCash" style="display:none">
+<input type="number" id="manualVal" placeholder="Nilai manual">
+</div>
+
 <div id="hutangBox" style="display:none">
 <input type="number" id="inputVal" placeholder="Nilai Dibayar">
 </div>
 
-<!-- BONGKAR INFO -->
 <div id="requiredBox" class="info" style="display:none"></div>
 
-<!-- INPUT BONGKAR -->
 <div id="bongkarInput" style="display:none">
 <h3>Nilai Bayaran</h3>
 <input type="number" id="inputBongkar" placeholder="Masukkan nilai">
@@ -125,11 +125,15 @@ function selectMethod(m){
 method=m;
 cashOptions.style.display = m==='cash'?'grid':'none';
 hutangBox.style.display = m==='hutang'?'block':'none';
+manualCash.style.display = m==='cash'?'block':'none';
 }
 
-function setCash(val){
+function setCash(val,el){
+document.querySelectorAll('#cashOptions .box').forEach(b=>b.classList.remove('selected'));
+el.classList.add('selected');
 if(val==='auto'){ cashValue=selectedPrice }
 else{ cashValue=val }
+manualVal.value='';
 }
 
 function updateRequired(){
@@ -173,10 +177,12 @@ let receipt=document.createElement('div');
 receipt.className='receipt';
 
 if(mode==='buy'){
-let val = method==='cash'?cashValue:parseInt(inputVal.value)||0;
+let val = method==='cash' ? (manualVal.value?parseInt(manualVal.value):cashValue) : (parseInt(inputVal.value)||0);
 let diff = val - selectedPrice;
 
-receipt.innerHTML=`ID: <b>${id}</b><br>
+receipt.innerHTML=`
+Nama: <input type="text" style="width:100%"><br>
+ID: <b>${id}</b><br>
 Mode: BELI<br>
 Package: <b>${selectedName} x${multiplier.value}</b><br>
 Metode: ${method}<br>
@@ -187,7 +193,9 @@ Kembalian: <b style="color:${diff>=0?'green':'red'}">Rp${diff}</b><br>`;
 let val=parseInt(inputBongkar.value)||0;
 let diff = val - selectedPrice;
 
-receipt.innerHTML=`ID: <b>${id}</b><br>
+receipt.innerHTML=`
+Nama: <input type="text" style="width:100%"><br>
+ID: <b>${id}</b><br>
 Mode: BONGKAR<br>
 Package: <b>${selectedName} x${multiplier.value}</b><br>
 Permintaan: <b>Rp${selectedPrice}</b><br>
