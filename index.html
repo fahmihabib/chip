@@ -1,195 +1,213 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sistem Rekod Chips Pro</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Chip POS</title>
 <style>
-body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-h2 { text-align: center; }
-.box {
-    background: white;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-}
-input, select, button {
-    padding: 8px;
-    margin: 5px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-}
-th { background: #333; color: white; }
-.delete-btn {
-    background: red;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-}
+body { font-family: monospace; margin:0; background:#eef2f7 }
+.container { padding:12px }
+h2 { text-align:center }
+.mode { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px }
+.mode div { padding:16px; text-align:center; border-radius:12px; font-weight:bold; color:#fff }
+.mode .buy { background:#1a73e8 }
+.mode .sell { background:#e17055 }
+.mode .active { outline:3px solid #000 }
+.box { padding:16px; margin:6px; border-radius:12px; text-align:center; color:#fff; font-weight:bold; box-shadow:0 6px 0 rgba(0,0,0,0.2) }
+.box:active { transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.2) }
+.selected { outline:3px solid #000 }
+.grid { display:grid; grid-template-columns:1fr 1fr }
+#userId { width:100%; font-size:26px; padding:14px; text-align:center }
+#inputVal { width:100%; font-size:22px; padding:12px; text-align:center; margin-top:8px }
+.info { background:#fff; padding:10px; margin-top:8px; border-radius:8px; text-align:center; font-weight:bold }
+.actions { position:fixed; bottom:0; left:0; right:0; display:flex }
+.actions button { flex:1; padding:14px; border:none; color:#fff; font-weight:bold }
+.actions button:nth-child(1){ background:#00b894 }
+.actions button:nth-child(2){ background:#0984e3 }
+.actions button:nth-child(3){ background:#6c5ce7 }
+.actions button:nth-child(4){ background:#d63031 }
+.receipt { background:#fff; margin-top:10px; padding:10px; border:1px dashed }
 </style>
 </head>
 <body>
+<div class="container">
+<h2>Chip System</h2>
 
-<h2>Sistem Rekod Chips Pro</h2>
-
-<div class="box">
-<h3>Tambah Transaksi</h3>
-
-<select id="type">
-    <option value="jual">Jual</option>
-    <option value="beli">Beli</option>
-</select>
-
-<select id="size">
-    <option value="1">1B</option>
-    <option value="0.5">500M</option>
-    <option value="0.3">300M</option>
-    <option value="0.2">200M</option>
-</select>
-
-<input type="number" id="qty" placeholder="Kuantiti">
-<input type="number" id="price" placeholder="Harga manual (optional)">
-
-<button onclick="addData()">Submit</button>
-<button onclick="deleteAll()">Delete All</button>
-<button onclick="downloadPDF()">Download PDF</button>
+<div class="mode">
+<div class="buy active" onclick="setMode('buy')">BELI</div>
+<div class="sell" onclick="setMode('sell')">BONGKAR</div>
 </div>
 
-<div id="pdfContent">
+<input type="number" id="userId" placeholder="ID">
 
-<div class="box">
-<h3>Rekod</h3>
-<table>
-<thead>
-<tr>
-<th>No</th>
-<th>Jenis</th>
-<th>Saiz</th>
-<th>Qty</th>
-<th>Total Harga</th>
-<th>Untung</th>
-</tr>
-</thead>
-<tbody id="tableData"></tbody>
-</table>
+<label>Gandaan</label>
+<select id="multiplier"></select>
+
+<h3>Pilih Package</h3>
+<div id="packages" class="grid"></div>
+
+<!-- METODE BAYAR (BELI ONLY) -->
+<div id="paymentMethod" style="display:none">
+<h3>Metode Bayaran</h3>
+<div class="grid">
+<div class="box" style="background:#00b894" onclick="selectMethod('cash')">CASH</div>
+<div class="box" style="background:#d63031" onclick="selectMethod('hutang')">HUTANG</div>
+</div>
 </div>
 
-<div class="box">
-<h3>Total Untung: Rp <span id="totalProfit">0</span></h3>
-<h3>Total Pembelian: Rp <span id="totalBuy">0</span></h3>
-<h3>Untung Bersih: Rp <span id="netProfit">0</span></h3>
+<!-- PILIH BAYAR CASH -->
+<div id="cashOptions" class="grid" style="display:none">
+<div class="box" style="background:#2ecc71" onclick="setCash(200000)">200k</div>
+<div class="box" style="background:#27ae60" onclick="setCash(150000)">150k</div>
+<div class="box" style="background:#3498db" onclick="setCash(100000)">100k</div>
+<div class="box" style="background:#9b59b6" onclick="setCash(50000)">50k</div>
+<div class="box" style="background:#f39c12" onclick="setCash(30000)">30k</div>
+<div class="box" style="background:#e67e22" onclick="setCash(20000)">20k</div>
+<div class="box" style="background:#e84393" onclick="setCash('auto')">Secukupnya</div>
 </div>
 
+<!-- HUTANG -->
+<div id="hutangBox" style="display:none">
+<input type="number" id="inputVal" placeholder="Nilai Dibayar">
+</div>
+
+<!-- BONGKAR INFO -->
+<div id="requiredBox" class="info" style="display:none"></div>
+
+<!-- INPUT BONGKAR -->
+<div id="bongkarInput" style="display:none">
+<h3>Nilai Bayaran</h3>
+<input type="number" id="inputBongkar" placeholder="Masukkan nilai">
+</div>
+
+<div id="receipts"></div>
+</div>
+
+<div class="actions">
+<button onclick="addRecord()">Submit</button>
+<button onclick="printData()">Print</button>
+<button onclick="downloadData()">Save</button>
+<button onclick="deleteAll()">Clear</button>
 </div>
 
 <script>
-let data = [];
-let totalProfit = 0;
-let totalBuy = 0;
+let mode='buy';
+let selectedPrice=0;
+let selectedName='';
+let method='';
+let cashValue=0;
 
-const sellPrice = {
-    1: 60000,
-    0.5: 30000,
-    0.3: 20000,
-    0.2: 15000
+const buyPackages=[{name:'1B',price:60000},{name:'500M',price:30000},{name:'300M',price:20000},{name:'200M',price:15000}];
+const sellPackages=[{name:'1B',price:50000},{name:'500M',price:25000}];
+
+function initMultiplier(max){multiplier.innerHTML='';for(let i=1;i<=max;i++){let o=document.createElement('option');o.value=i;o.innerText='x'+i;multiplier.appendChild(o)}}
+
+function renderPackages(){
+packages.innerHTML='';
+let list = mode==='buy'?buyPackages:sellPackages;
+list.forEach(p=>{
+let d=document.createElement('div');
+d.className='box';
+d.style.background= mode==='buy'?'#1a73e8':'#e17055';
+d.innerText=`${p.name} (${p.price/1000}k)`;
+d.onclick=()=>{
+selectedName=p.name;
+selectedPrice=p.price * parseInt(multiplier.value);
+packages.querySelectorAll('.box').forEach(b=>b.classList.remove('selected'));
+d.classList.add('selected');
+updateRequired();
 };
-
-const buyPricePerB = 50000;
-
-function addData() {
-    let type = document.getElementById("type").value;
-    let size = parseFloat(document.getElementById("size").value);
-    let qty = parseInt(document.getElementById("qty").value);
-    let manualPrice = document.getElementById("price").value;
-
-    if (!qty) {
-        alert("Masukkan kuantiti!");
-        return;
-    }
-
-    let pricePerUnit = manualPrice ? parseInt(manualPrice) :
-        (type === "jual" ? sellPrice[size] : buyPricePerB * size);
-
-    let totalPrice = pricePerUnit * qty;
-    let cost = buyPricePerB * size * qty;
-    let profit = 0;
-
-    if (type === "jual") {
-        profit = totalPrice - cost;
-        totalProfit += profit;
-    } else {
-        totalBuy += totalPrice;
-    }
-
-    data.push({ type, size, qty, totalPrice, profit });
-    renderTable();
+packages.appendChild(d);
+});
 }
 
-function renderTable() {
-    let table = document.getElementById("tableData");
-    table.innerHTML = "";
-
-    data.forEach((item, index) => {
-        table.innerHTML += `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.type}</td>
-            <td>${convertSize(item.size)}</td>
-            <td>${item.qty}</td>
-            <td>Rp ${item.totalPrice.toLocaleString()}</td>
-            <td>${item.type === "jual" ? "Rp " + item.profit.toLocaleString() : "-"}</td>
-        </tr>`;
-    });
-
-    updateSummary();
+function selectMethod(m){
+method=m;
+cashOptions.style.display = m==='cash'?'grid':'none';
+hutangBox.style.display = m==='hutang'?'block':'none';
 }
 
-function deleteAll() {
-    if (confirm("Padam semua rekod?")) {
-        data = [];
-        totalProfit = 0;
-        totalBuy = 0;
-        renderTable();
-    }
+function setCash(val){
+if(val==='auto'){ cashValue=selectedPrice }
+else{ cashValue=val }
 }
 
-function updateSummary() {
-    document.getElementById("totalProfit").innerText = totalProfit.toLocaleString();
-    document.getElementById("totalBuy").innerText = totalBuy.toLocaleString();
-    document.getElementById("netProfit").innerText = (totalProfit - totalBuy).toLocaleString();
+function updateRequired(){
+if(mode==='sell' && selectedPrice>0){
+requiredBox.style.display='block';
+requiredBox.innerText='Perlu Bayar: Rp'+selectedPrice;
+}else{
+requiredBox.style.display='none';
+}
 }
 
-function convertSize(size) {
-    if (size == 1) return "1B";
-    if (size == 0.5) return "500M";
-    if (size == 0.3) return "300M";
-    if (size == 0.2) return "200M";
+function setMode(m){
+mode=m;
+document.querySelectorAll('.mode div').forEach(b=>b.classList.remove('active'));
+document.querySelector('.'+(m==='buy'?'buy':'sell')).classList.add('active');
+
+if(mode==='buy'){
+initMultiplier(5);
+paymentMethod.style.display='block';
+bongkarInput.style.display='none';
+}else{
+initMultiplier(30);
+paymentMethod.style.display='none';
+bongkarInput.style.display='block';
 }
 
-// 🔥 DOWNLOAD PDF
-function downloadPDF() {
-    let element = document.getElementById("pdfContent");
-
-    let opt = {
-        margin: 0.5,
-        filename: 'rekod_chips.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save();
+selectedName='';selectedPrice=0;renderPackages();updateRequired();
 }
+
+multiplier.onchange=()=>{
+let base=(mode==='buy'?buyPackages:sellPackages).find(p=>p.name===selectedName)?.price||0;
+selectedPrice=base*parseInt(multiplier.value);
+updateRequired();
+}
+
+function addRecord(){
+let id=userId.value;
+if(!id||!selectedName){alert('Lengkapkan');return}
+
+let receipt=document.createElement('div');
+receipt.className='receipt';
+
+if(mode==='buy'){
+let val = method==='cash'?cashValue:parseInt(inputVal.value)||0;
+let diff = val - selectedPrice;
+
+receipt.innerHTML=`ID: <b>${id}</b><br>
+Mode: BELI<br>
+Package: <b>${selectedName} x${multiplier.value}</b><br>
+Metode: ${method}<br>
+Nilai Bayaran: <b>Rp${val}</b><br>
+Kembalian: <b style="color:${diff>=0?'green':'red'}">Rp${diff}</b><br>`;
+
+}else{
+let val=parseInt(inputBongkar.value)||0;
+let diff = val - selectedPrice;
+
+receipt.innerHTML=`ID: <b>${id}</b><br>
+Mode: BONGKAR<br>
+Package: <b>${selectedName} x${multiplier.value}</b><br>
+Permintaan: <b>Rp${selectedPrice}</b><br>
+Nilai Bayaran: <b>Rp${val}</b><br>
+Jumlah Dibayar: <b style="color:${diff>=0?'green':'red'}">Rp${diff}</b><br>`;
+}
+
+let del=document.createElement('button');
+del.innerText='Delete';
+del.onclick=()=>receipt.remove();
+receipt.appendChild(del);
+
+receipts.prepend(receipt);
+}
+
+function printData(){window.print()}
+function deleteAll(){receipts.innerHTML=''}
+function downloadData(){let t='';document.querySelectorAll('.receipt').forEach(r=>t+=r.innerText+'\n---\n');let b=new Blob([t]);let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='resit.txt';a.click()}
+
+setMode('buy');
 </script>
-
 </body>
 </html>
