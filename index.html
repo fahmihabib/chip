@@ -62,6 +62,14 @@ input[type=number]{
     text-align:center;
 }
 
+.green{
+    color:green;
+}
+
+.red{
+    color:red;
+}
+
 button{
     width:100%;
     padding:12px;
@@ -151,7 +159,8 @@ button{
     <input type="number" id="debt" value="0">
 
     <div class="total-box">
-        Total: Rp <span id="total">0</span>
+        Total:
+        <span id="total">0</span>
     </div>
 
     <button class="submit-btn" onclick="generateReceipt()">
@@ -212,12 +221,23 @@ function calculateTotal(){
 
     });
 
-    // HUTANG AKAN TOLAK TOTAL
     const debt = parseInt(document.getElementById('debt').value) || 0;
 
     total -= debt;
 
     totalElement.innerText = formatNumber(total);
+
+    // RESET COLOR
+    totalElement.classList.remove('green','red');
+
+    // JIKA ADA HUTANG -> MERAH
+    if(debt > 0){
+        totalElement.classList.add('red');
+    }
+    // TIADA HUTANG -> HIJAU
+    else{
+        totalElement.classList.add('green');
+    }
 
 }
 
@@ -249,10 +269,17 @@ function generateReceipt(){
 
     });
 
-    // TOTAL FINAL TOLAK HUTANG
     const finalTotal = subtotal - debt;
 
     const now = new Date();
+
+    // WARNA TOTAL
+    const totalClass = debt > 0 ? 'red' : 'green';
+
+    // WARNA HUTANG
+    const debtHTML = debt > 0
+        ? `<span class="red">- Rp ${formatNumber(debt)}</span>`
+        : `Rp 0`;
 
     const content = `
 
@@ -270,12 +297,14 @@ function generateReceipt(){
     <br><br>
 
     Hutang :
-    - Rp ${formatNumber(debt)}
+    ${debtHTML}
 
     <div class="line"></div>
 
     TOTAL :
+    <span class="${totalClass}">
     Rp ${formatNumber(finalTotal)}
+    </span>
 
     `;
 
