@@ -1,82 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chip System</title>
+<title>Chip Order Database</title>
 
 <style>
-body { font-family: monospace; margin:0; background:#eef2f7 }
-.container { padding:12px }
-h2 { text-align:center }
 
-.mode { display:grid; grid-template-columns:1fr 1fr; gap:8px }
-.mode div { padding:14px; text-align:center; border-radius:10px; color:#fff; font-weight:bold }
-.buy { background:#1a73e8 }
-.sell { background:#e17055 }
-.active { outline:3px solid #000 }
-
-.box {
-  padding:14px;
-  margin:5px;
-  border-radius:10px;
-  text-align:center;
-  color:#fff;
-  font-weight:bold;
-  box-shadow:0 5px 0 rgba(0,0,0,0.2);
-  line-height:1.4;
-}
-.box small { display:block; font-size:12px }
-.box:active { transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,0.2) }
-.selected { outline:3px solid #000; transform:scale(1.05) }
-
-.grid { display:grid; grid-template-columns:1fr 1fr }
-
-input, select {
-  width:100%;
-  padding:10px;
-  font-size:18px;
-  text-align:center;
-  margin-top:6px;
+body{
+    background:#f2f2f2;
+    font-family:Arial,sans-serif;
+    padding:20px;
 }
 
-.preview {
-  margin-top:8px;
-  padding:10px;
-  background:#fff;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  border:2px dashed #000;
+.container{
+    max-width:420px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
-.actions {
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  display:flex;
+h2{
+    text-align:center;
+    margin-bottom:20px;
 }
 
-.actions button {
-  flex:1;
-  padding:12px;
-  border:none;
-  color:#fff;
-  font-weight:bold;
+label{
+    display:block;
+    margin-top:12px;
+    font-weight:bold;
 }
 
-.actions button:nth-child(1){ background:#00b894 }
-.actions button:nth-child(2){ background:#0984e3 }
-.actions button:nth-child(3){ background:#6c5ce7 }
-.actions button:nth-child(4){ background:#d63031 }
-
-.receipt {
-  background:#fff;
-  margin-top:10px;
-  padding:10px;
-  border:1px dashed;
+input[type=text],
+input[type=number]{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-sizing:border-box;
 }
+
+.checkbox-group{
+    margin-top:10px;
+}
+
+.checkbox-group label{
+    font-weight:normal;
+    margin:8px 0;
+}
+
+.total-box{
+    margin-top:20px;
+    padding:12px;
+    background:#f7f7f7;
+    border-radius:6px;
+    font-size:20px;
+    font-weight:bold;
+    text-align:center;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:15px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.submit-btn{
+    background:#28a745;
+    color:white;
+}
+
+.download-btn{
+    background:#007bff;
+    color:white;
+}
+
+#receipt{
+    width:300px;
+    background:white;
+    padding:10px;
+    margin:20px auto;
+    font-family:monospace;
+    font-size:13px;
+    border:1px dashed #999;
+    color:black;
+}
+
+.center{
+    text-align:center;
+}
+
+.line{
+    border-top:1px dashed black;
+    margin:8px 0;
+}
+
+.hidden{
+    display:none;
+}
+
 </style>
 </head>
 
@@ -84,264 +113,197 @@ input, select {
 
 <div class="container">
 
-<h2>Chip System</h2>
+    <h2>Chip Order</h2>
 
-<div class="mode">
-<div class="buy active" onclick="setMode('buy')">BELI</div>
-<div class="sell" onclick="setMode('sell')">BONGKAR</div>
+    <label>Nama / ID</label>
+    <input type="text" id="customer" placeholder="Masukkan nama atau ID">
+
+    <div class="checkbox-group">
+
+        <label>
+            <input type="checkbox" value="10000" data-label="100M">
+            100M - 10rb
+        </label>
+
+        <label>
+            <input type="checkbox" value="15000" data-label="200M">
+            200M - 15rb
+        </label>
+
+        <label>
+            <input type="checkbox" value="20000" data-label="300M">
+            300M - 20rb
+        </label>
+
+        <label>
+            <input type="checkbox" value="30000" data-label="500M">
+            500M - 30rb
+        </label>
+
+        <label>
+            <input type="checkbox" value="60000" data-label="1B">
+            1B - 60rb
+        </label>
+
+    </div>
+
+    <label>Nilai Hutang (optional)</label>
+    <input type="number" id="debt" value="0">
+
+    <div class="total-box">
+        Total: Rp <span id="total">0</span>
+    </div>
+
+    <button class="submit-btn" onclick="generateReceipt()">
+        Submit
+    </button>
+
+    <button class="download-btn" onclick="downloadReceipt()">
+        Download Report Image
+    </button>
+
 </div>
 
-<input type="number" id="userId" placeholder="ID">
+<div id="receipt" class="hidden">
 
-<label>Gandaan</label>
-<select id="multiplier"></select>
+    <div class="center">
+        <b>CHIP RECEIPT</b><br>
+        ==================
+    </div>
 
-<h3>Package</h3>
-<div id="packages" class="grid"></div>
+    <div class="line"></div>
 
-<!-- 🔥 PREVIEW (UNTUK BELI & BONGKAR) -->
-<div id="previewBox" class="preview" style="display:none"></div>
+    <div id="receiptContent"></div>
 
-<div id="paymentMethod">
-<h3>Metode Pembayaran</h3>
-<div class="grid">
-<div class="box" style="background:#00b894" onclick="selectMethod('cash')">CASH</div>
-<div class="box" style="background:#d63031" onclick="selectMethod('hutang')">HUTANG</div>
-</div>
-</div>
+    <div class="line"></div>
 
-<div id="cashOptions" class="grid" style="display:none">
-<div class="box" style="background:#00b894" onclick="setCash(200000,this)">200k</div>
-<div class="box" style="background:#00b894" onclick="setCash(150000,this)">150k</div>
-<div class="box" style="background:#00b894" onclick="setCash(100000,this)">100k</div>
-<div class="box" style="background:#00b894" onclick="setCash(70000,this)">70k</div>
-<div class="box" style="background:#00b894" onclick="setCash(50000,this)">50k</div>
-<div class="box" style="background:#00b894" onclick="setCash(30000,this)">30k</div>
-<div class="box" style="background:#00b894" onclick="setCash(20000,this)">20k</div>
-
-<div class="box" style="background:#6c5ce7" onclick="setExact(this)">
-SECUKUPNYA
-<small>Bayar ngam</small>
-</div>
-</div>
-
-<input id="manualVal" placeholder="Nilai manual (optional)" style="display:none">
-<input id="inputVal" placeholder="Nilai hutang" style="display:none">
-
-<div id="bongkarInput" style="display:none">
-<input id="inputBongkar" placeholder="Nilai dibayar">
-</div>
-
-<div id="receipts"></div>
+    <div class="center">
+        Terima Kasih
+    </div>
 
 </div>
 
-<div class="actions">
-<button onclick="addRecord()">Submit</button>
-<button onclick="printData()">Print</button>
-<button onclick="downloadData()">Save</button>
-<button onclick="deleteAll()">Clear</button>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 
-let mode='buy';
-let selectedPrice=0;
-let selectedName='';
-let basePrice=0;
-let method='';
-let cashValue=0;
+const checkboxes = document.querySelectorAll('input[type=checkbox]');
+const totalElement = document.getElementById('total');
 
-const buyPackages=[
-{name:'1B',price:60000},
-{name:'500M',price:30000},
-{name:'300M',price:20000},
-{name:'200M',price:15000}
-];
-
-const sellPackages=[
-{name:'1B',price:50000},
-{name:'500M',price:25000}
-];
-
-function formatK(num){ return (num/1000)+'k'; }
-
-function initMultiplier(max){
-multiplier.innerHTML='';
-for(let i=1;i<=max;i++){
-let o=document.createElement('option');
-o.value=i;
-o.innerText='x'+i;
-multiplier.appendChild(o);
-}
-}
-
-function updatePrice(){
-selectedPrice = basePrice * multiplier.value;
-
-if(selectedName){
-previewBox.style.display='block';
-previewBox.innerHTML = `
-${mode==='buy'?'Harga':'Permintaan'}:
-<br>Rp ${selectedPrice}
-`;
-}
-}
-
-function renderPackages(){
-packages.innerHTML='';
-let list = mode==='buy'?buyPackages:sellPackages;
-
-list.forEach(p=>{
-let d=document.createElement('div');
-d.className='box';
-d.style.background= mode==='buy'?'#1a73e8':'#e17055';
-
-d.innerHTML=`
-${p.name}
-<small>${formatK(p.price)}</small>
-`;
-
-d.onclick=()=>{
-selectedName=p.name;
-basePrice=p.price;
-updatePrice();
-
-document.querySelectorAll('#packages .box').forEach(b=>b.classList.remove('selected'));
-d.classList.add('selected');
-};
-packages.appendChild(d);
+checkboxes.forEach(cb => {
+    cb.addEventListener('change', calculateTotal);
 });
+
+document.getElementById('debt').addEventListener('input', calculateTotal);
+
+function formatNumber(num){
+    return num.toLocaleString('id-ID');
 }
 
-multiplier.onchange = updatePrice;
+function calculateTotal(){
 
-function setMode(m){
-mode=m;
+    let total = 0;
 
-document.querySelectorAll('.mode div').forEach(b=>b.classList.remove('active'));
-document.querySelector('.'+(m==='buy'?'buy':'sell')).classList.add('active');
+    checkboxes.forEach(cb => {
 
-previewBox.style.display='none';
+        if(cb.checked){
+            total += parseInt(cb.value);
+        }
 
-if(m==='buy'){
-initMultiplier(5);
-paymentMethod.style.display='block';
-bongkarInput.style.display='none';
-}else{
-initMultiplier(30);
-paymentMethod.style.display='none';
-cashOptions.style.display='none';
-manualVal.style.display='none';
-inputVal.style.display='none';
-bongkarInput.style.display='block';
+    });
+
+    // HUTANG AKAN TOLAK TOTAL
+    const debt = parseInt(document.getElementById('debt').value) || 0;
+
+    total -= debt;
+
+    totalElement.innerText = formatNumber(total);
+
 }
 
-renderPackages();
+function generateReceipt(){
+
+    const customer = document.getElementById('customer').value || '-';
+
+    const debt = parseInt(document.getElementById('debt').value) || 0;
+
+    let items = '';
+
+    let subtotal = 0;
+
+    checkboxes.forEach(cb => {
+
+        if(cb.checked){
+
+            const price = parseInt(cb.value);
+
+            subtotal += price;
+
+            items += `
+            ${cb.dataset.label}
+            Rp ${formatNumber(price)}
+            <br>
+            `;
+
+        }
+
+    });
+
+    // TOTAL FINAL TOLAK HUTANG
+    const finalTotal = subtotal - debt;
+
+    const now = new Date();
+
+    const content = `
+
+    Nama/ID : ${customer}<br>
+    Tanggal : ${now.toLocaleString()}<br>
+
+    <div class="line"></div>
+
+    ${items}
+
+    <div class="line"></div>
+
+    Subtotal :
+    Rp ${formatNumber(subtotal)}
+    <br><br>
+
+    Hutang :
+    - Rp ${formatNumber(debt)}
+
+    <div class="line"></div>
+
+    TOTAL :
+    Rp ${formatNumber(finalTotal)}
+
+    `;
+
+    document.getElementById('receiptContent').innerHTML = content;
+
+    document.getElementById('receipt').classList.remove('hidden');
+
 }
 
-function selectMethod(m){
-method=m;
-cashOptions.style.display = m==='cash'?'grid':'none';
-manualVal.style.display = m==='cash'?'block':'none';
-inputVal.style.display = m==='hutang'?'block':'none';
+function downloadReceipt(){
+
+    const receipt = document.getElementById('receipt');
+
+    html2canvas(receipt).then(canvas => {
+
+        const link = document.createElement('a');
+
+        link.download = 'chip-report.png';
+
+        link.href = canvas.toDataURL();
+
+        link.click();
+
+    });
+
 }
 
-function setCash(val,el){
-document.querySelectorAll('#cashOptions .box').forEach(b=>b.classList.remove('selected'));
-el.classList.add('selected');
-cashValue = val;
-manualVal.value='';
-}
-
-function setExact(el){
-document.querySelectorAll('#cashOptions .box').forEach(b=>b.classList.remove('selected'));
-el.classList.add('selected');
-cashValue = selectedPrice;
-manualVal.value='';
-}
-
-function addRecord(){
-
-let id=userId.value;
-if(!id||!selectedName) return alert('Lengkapkan');
-
-updatePrice();
-
-let r=document.createElement('div');
-r.className='receipt';
-
-if(mode==='buy'){
-let val = method==='cash'
-? (manualVal.value?parseInt(manualVal.value):cashValue)
-: parseInt(inputVal.value||0);
-
-let diff = val - selectedPrice;
-
-r.innerHTML=`
-Nama: <input><br>
-ID: <b>${id}</b><br>
-Mode: BELI<br>
-Package: <b>${selectedName} x${multiplier.value}</b><br>
-Bayaran: <b>Rp${val}</b><br>
-Kembalian: <b style="color:${diff>=0?'green':'red'}">Rp${diff}</b><br>
-`;
-
-}else{
-
-let val=parseInt(inputBongkar.value||0);
-let diff = val - selectedPrice;
-
-r.innerHTML=`
-Nama: <input><br>
-ID: <b>${id}</b><br>
-Mode: BONGKAR<br>
-Package: <b>${selectedName} x${multiplier.value}</b><br>
-Permintaan: <b>Rp${selectedPrice}</b><br>
-Dibayar: <b>Rp${val}</b><br>
-Beza: <b style="color:${diff>=0?'green':'red'}">Rp${diff}</b><br>
-`;
-}
-
-let del=document.createElement('button');
-del.innerText='Delete';
-del.onclick=()=>r.remove();
-
-r.appendChild(del);
-receipts.prepend(r);
-}
-
-function printData(){
-let clone=receipts.cloneNode(true);
-clone.querySelectorAll('input').forEach(i=>{
-i.replaceWith(i.value||'-');
-});
-let w=window.open('');
-w.document.write(clone.innerHTML);
-w.print();
-}
-
-function downloadData(){
-let text='';
-document.querySelectorAll('.receipt').forEach(r=>{
-let c=r.cloneNode(true);
-c.querySelectorAll('input').forEach(i=>{
-i.replaceWith(i.value||'-');
-});
-text+=c.innerText+'\\n-----\\n';
-});
-let blob=new Blob([text]);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='data.txt';
-a.click();
-}
-
-function deleteAll(){
-receipts.innerHTML='';
-}
-
-setMode('buy');
+calculateTotal();
 
 </script>
 
